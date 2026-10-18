@@ -36,19 +36,23 @@ table{width:100%;border-collapse:collapse}td,th{padding:8px 6px;border-bottom:1p
 <div id="modal"></div>
 <script>
 const $=s=>document.querySelector(s);
-const PAGES=[['dash','📊 Dashboard'],['proj','💍 โปรเจ็ค'],['tx','🧾 รายรับ-รายจ่าย'],['price','🌸 ราคาสินค้า']];
+const PAGES=[['dash','📊 Dashboard'],['proj','💍 โปรเจ็ค'],['tx','🧾 รายการจัดซื้อ'],['price','🌸 ราคาสินค้า']];
 const CATS=['ดอกไม้','ตกแต่ง/เวที','อาหาร/เครื่องดื่ม','ช่างภาพ/วิดีโอ','ดนตรี/MC','ชุด/แต่งหน้า','ขนส่ง','ค่าแรงทีมงาน','อื่นๆ'];
+const ST=['Not Started','Processing','Done'],MAINS=['Backdrop','Dessert Table','Dinner Table','ผลไม้','ดอกไม้','จิปาถะ'];
 const F={
  Projects:[['name','ชื่องาน'],['client','ลูกค้า'],['date','วันงาน','date'],['venue','สถานที่'],['budget','งบ/ค่าจ้างที่ได้รับ (บาท)','number'],['status','สถานะ','select',['รอดำเนินการ','กำลังดำเนินการ','เสร็จสิ้น','ยกเลิก']],['note','รายละเอียด','textarea']],
- Transactions:[['date','วันที่','date'],['projectId','โปรเจ็ค','project'],['type','ประเภท','select',['รายจ่าย','รายรับ']],['category','หมวด','select',CATS],['desc','รายการ'],['amount','จำนวนเงิน (บาท)','number'],['vendor','ร้าน/ผู้รับเงิน']],
+ Items:[['projectId','โปรเจ็ค','project'],['main','หมวดหลัก (เช่น Dinner Table, ดอกไม้)','main'],['name','รายการ'],['detail','รายละเอียด'],['qty','จำนวน','number'],['unit','หน่วย (เช่น เมตร, แพ็ค, ชิ้น)'],['price','ราคาต่อหน่วย','number'],['total','ราคารวม (ปล่อยว่าง = จำนวน × ราคา)','number'],['remark','หมายเหตุ'],['status','สถานะ','select',ST],['paid','จ่ายแล้ว (บาท)','number'],['image','ลิงก์รูป (ถ้ามี)']],
+ Budgets:[['projectId','โปรเจ็ค','project'],['main','หมวด','main'],['amount','งบของหมวด (บาท)','number']],
+ Transactions:[['date','วันที่รับเงิน','date'],['projectId','โปรเจ็ค','project'],['desc','รายการ (เช่น มัดจำงวด 1)'],['amount','จำนวนเงิน (บาท)','number']],
  Prices:[['item','สินค้า/ดอกไม้'],['unit','หน่วย (เช่น มัด, ก้าน, ชิ้น)'],['shop','ร้าน'],['price','ราคา (บาท)','number'],['date','วันที่เช็คราคา','date'],['note','หมายเหตุ']]
 };
-let D={Projects:[],Transactions:[],Prices:[]},page='dash',pid=null,txf='',q='';
+let D={Projects:[],Transactions:[],Prices:[],Items:[],Budgets:[]},page='dash',pid=null,txf='',q='';
 const N=x=>Number(x)||0,fmt=n=>N(n).toLocaleString('th-TH'),today=()=>new Date().toISOString().slice(0,10);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const sum=a=>a.reduce((t,x)=>t+N(x.amount),0);
 const pname=id=>(D.Projects.find(p=>p.id===id)||{}).name||'-';
-function stats(p){const t=D.Transactions.filter(x=>x.projectId===p.id);const spent=sum(t.filter(x=>x.type==='รายจ่าย')),rec=sum(t.filter(x=>x.type==='รายรับ'));return{spent,rec,left:N(p.budget)-spent,t}}
+const sk=(a,k)=>a.reduce((t,x)=>t+N(x[k]),0);
+function stats(p){const it=D.Items.filter(x=>x.projectId===p.id),inc=D.Transactions.filter(x=>x.projectId===p.id&&x.type==='รายรับ'),total=sk(it,'total');return{it,inc,total,paid:sk(it,'paid'),rec:sk(inc,'amount'),spent:total,left:N(p.budget)-total}}
 const API='https://script.google.com/macros/s/AKfycbyBSpa9_9s4wIMx3WavPO_sP7xSwlTi9fRS0XZGwfqt2VMnDltBDoOVexNrvXoUsbc8KQ/exec';
 let KEY=localStorage.getItem('wk')||'';
 async function api(action,p){
@@ -67,42 +71,54 @@ function render(){
 }
 /* ---------- Dashboard ---------- */
 function dash(){
- const ps=D.Projects.filter(p=>p.status!=='ยกเลิก'),S=ps.map(stats);
- const budget=ps.reduce((t,p)=>t+N(p.budget),0),spent=S.reduce((t,s)=>t+s.spent,0),rec=S.reduce((t,s)=>t+s.rec,0);
+ const ps=D.Projects.filter(p=>p.status!=='ยกเลิก'),S=ps.map(stats),ids=ps.map(p=>p.id);
+ const budget=ps.reduce((t,p)=>t+N(p.budget),0),spent=S.reduce((t,s)=>t+s.total,0),paid=S.reduce((t,s)=>t+s.paid,0),rec=S.reduce((t,s)=>t+s.rec,0);
  const act=ps.filter(p=>p.status==='กำลังดำเนินการ'||p.status==='รอดำเนินการ');
  const up=act.filter(p=>p.date>=today()).sort((a,b)=>a.date<b.date?-1:1).slice(0,5);
- const cat={};D.Transactions.filter(x=>x.type==='รายจ่าย').forEach(x=>cat[x.category||'อื่นๆ']=(cat[x.category||'อื่นๆ']||0)+N(x.amount));
- const cs=Object.entries(cat).sort((a,b)=>b[1]-a[1]),mx=cs.length?cs[0][1]:1;
- const rc=[...D.Transactions].sort((a,b)=>a.date<b.date?1:-1).slice(0,8);
+ const its=D.Items.filter(x=>ids.includes(x.projectId)),cat={};
+ its.forEach(x=>{const k=x.main||'อื่นๆ';cat[k]=(cat[k]||0)+N(x.total)});
+ const cs=Object.entries(cat).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]),mx=cs.length?cs[0][1]:1;
+ const pend=its.filter(x=>x.status!=='Done').slice(0,8);
  $('#app').innerHTML=`<div class="grid">
- ${[['งานทั้งหมด',ps.length+' งาน'],['งานที่ยังไม่จบ',act.length+' งาน'],['งบรวมที่ได้รับ','฿'+fmt(budget)],['ใช้จ่ายแล้ว','฿'+fmt(spent)],['รับเงินแล้ว','฿'+fmt(rec)],['ค้างรับ','฿'+fmt(budget-rec)],['กำไรโดยประมาณ','฿'+fmt(budget-spent)]].map(([a,b])=>`<div class="card stat"><small>${a}</small><b>${b}</b></div>`).join('')}</div>
+ ${[['งานทั้งหมด',ps.length+' งาน'],['งานที่ยังไม่จบ',act.length+' งาน'],['งบรวมที่ได้รับ','฿'+fmt(budget)],['ค่าใช้จ่ายรวม','฿'+fmt(spent)],['จ่ายแล้ว','฿'+fmt(paid)],['ค้างจ่าย','฿'+fmt(spent-paid)],['รับเงินแล้ว','฿'+fmt(rec)],['ค้างรับ','฿'+fmt(budget-rec)],['กำไรโดยประมาณ','฿'+fmt(budget-spent)]].map(([a,b])=>`<div class="card stat"><small>${a}</small><b>${b}</b></div>`).join('')}</div>
  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
  <div class="card"><h3 style="margin-top:0">งานที่กำลังจะถึง</h3>${up.map(p=>`<div class="row clk" onclick="go('pd','${p.id}')"><span>${esc(p.name)}<br><span class="mute">${esc(p.date)} · ${esc(p.venue)}</span></span><span class="tag">${esc(p.status)}</span></div>`).join('')||'<p class="mute">ไม่มีงานที่กำลังจะถึง</p>'}</div>
  <div class="card"><h3 style="margin-top:0">ค่าใช้จ่ายตามหมวด</h3>${cs.map(([k,v])=>`<div class="mute">${esc(k)} · ฿${fmt(v)}</div><div class="bar"><i style="width:${v/mx*100}%"></i></div>`).join('')||'<p class="mute">ยังไม่มีข้อมูล</p>'}</div></div>
- <div class="card"><h3 style="margin-top:0">รายการล่าสุด</h3>${rc.map(x=>`<div class="row"><span>${esc(x.desc)}<br><span class="mute">${esc(x.date)} · ${esc(pname(x.projectId))}</span></span><b class="${x.type==='รายรับ'?'ok':'bad'}">${x.type==='รายรับ'?'+':'-'}${fmt(x.amount)}</b></div>`).join('')||'<p class="mute">ยังไม่มีรายการ</p>'}</div>`;
+ <div class="card"><h3 style="margin-top:0">รายการที่ยังไม่เสร็จ (${its.filter(x=>x.status!=='Done').length})</h3>${pend.map(x=>`<div class="row"><span>${esc(x.name)}<br><span class="mute">${esc(pname(x.projectId))} · ${esc(x.main)}</span></span><span class="tag">${esc(x.status)}</span></div>`).join('')||'<p class="mute">ไม่มีรายการค้าง</p>'}</div>`;
 }
 /* ---------- Projects ---------- */
 function proj(){
  const ps=[...D.Projects].sort((a,b)=>a.date<b.date?1:-1);
  $('#app').innerHTML=`<div class="bar2"><h3 style="margin:0">โปรเจ็คทั้งหมด (${ps.length})</h3><button class="p" onclick="openForm('Projects')">+ เพิ่มงาน</button></div>`+
- (ps.map(p=>{const s=stats(p),pc=N(p.budget)?s.spent/N(p.budget)*100:0;return`<div class="card clk" style="margin-bottom:10px" onclick="go('pd','${p.id}')"><div class="row" style="border:0;padding:0"><b>${esc(p.name)}</b><span class="tag">${esc(p.status)}</span></div><div class="mute">${esc(p.client)} · ${esc(p.date)} · ${esc(p.venue)}</div><div class="bar ${pc>100?'over':''}"><i style="width:${Math.min(pc,100)}%"></i></div><div class="mute">งบ ฿${fmt(p.budget)} · ใช้ ฿${fmt(s.spent)} · <span class="${s.left<0?'bad':'ok'}">เหลือ ฿${fmt(s.left)}</span></div></div>`}).join('')||'<p class="mute">ยังไม่มีงาน กด "+ เพิ่มงาน"</p>');
+ (ps.map(p=>{const s=stats(p),pc=N(p.budget)?s.spent/N(p.budget)*100:0;return`<div class="card clk" style="margin-bottom:10px" onclick="go('pd','${p.id}')"><div class="row" style="border:0;padding:0"><b>${esc(p.name)}</b><span class="tag">${esc(p.status)}</span></div><div class="mute">${esc(p.client)} · ${esc(p.date)} · ${esc(p.venue)}</div><div class="bar ${pc>100?'over':''}"><i style="width:${Math.min(pc,100)}%"></i></div><div class="mute">งบ ฿${fmt(p.budget)} · ค่าใช้จ่าย ฿${fmt(s.spent)} (จ่ายแล้ว ฿${fmt(s.paid)}) · <span class="${s.left<0?'bad':'ok'}">เหลือ ฿${fmt(s.left)}</span></div></div>`}).join('')||'<p class="mute">ยังไม่มีงาน กด "+ เพิ่มงาน"</p>');
 }
 function pd(){
  const p=D.Projects.find(x=>x.id===pid);if(!p)return go('proj');const s=stats(p);
  $('#app').innerHTML=`<div class="bar2"><button class="g" onclick="go('proj')">← กลับ</button><span><button class="g" onclick="openForm('Projects','${p.id}')">แก้ไข</button> <button class="g" onclick="del('Projects','${p.id}')">ลบ</button></span></div>
  <div class="card"><h3 style="margin:0">${esc(p.name)} <span class="tag">${esc(p.status)}</span></h3><div class="mute">ลูกค้า: ${esc(p.client)} · วันงาน: ${esc(p.date)} · สถานที่: ${esc(p.venue)}</div><p>${esc(p.note).replace(/\n/g,'<br>')}</p></div>
- <div class="grid" style="margin-top:10px">${[['งบที่ได้รับ',p.budget],['ใช้ไป',s.spent],['เหลือ',s.left],['รับเงินแล้ว',s.rec],['ค้างรับ',N(p.budget)-s.rec]].map(([a,b])=>`<div class="card stat"><small>${a}</small><b>฿${fmt(b)}</b></div>`).join('')}</div>
- <div class="bar2"><h3 style="margin:0">รายการของงานนี้</h3><button class="p" onclick="openForm('Transactions',null,{projectId:'${p.id}'})">+ เพิ่มรายการ</button></div>${txTable(s.t,false)}`;
+ <div class="grid" style="margin-top:10px">${[['งบที่ได้รับ',p.budget],['ค่าใช้จ่ายรวม',s.total],['จ่ายแล้ว',s.paid],['ค้างจ่าย',s.total-s.paid],['เหลือจากงบ',s.left],['รับเงินแล้ว',s.rec],['ค้างรับ',N(p.budget)-s.rec]].map(([a,b])=>`<div class="card stat"><small>${a}</small><b>฿${fmt(b)}</b></div>`).join('')}</div>
+ <div class="bar2"><h3 style="margin:0">รายการจัดซื้อ</h3><span><button class="g" onclick="openForm('Budgets',null,{projectId:'${p.id}'})">+ ตั้งงบหมวด</button> <button class="p" onclick="openForm('Items',null,{projectId:'${p.id}'})">+ เพิ่มรายการ</button></span></div>${itemsView(p.id)}
+ <div class="bar2"><h3 style="margin:0">เงินที่รับจากลูกค้า</h3><button class="p" onclick="openForm('Transactions',null,{projectId:'${p.id}'})">+ บันทึกรับเงิน</button></div>
+ <div class="card">${s.inc.map(x=>`<div class="row"><span>${esc(x.desc)}<br><span class="mute">${esc(x.date)}</span></span><span><b class="ok">+${fmt(x.amount)}</b> <button class="g" onclick="openForm('Transactions','${x.id}')">แก้</button></span></div>`).join('')||'<p class="mute">ยังไม่มีรายการ</p>'}</div>`;
 }
-/* ---------- Transactions ---------- */
-function txTable(t,showP){
- t=[...t].sort((a,b)=>a.date<b.date?1:-1);
- return `<div class="card wrap"><table><tr><th>วันที่</th>${showP?'<th>งาน</th>':''}<th>รายการ</th><th>หมวด</th><th class="r">จำนวน</th><th></th></tr>${t.map(x=>`<tr><td>${esc(x.date)}</td>${showP?`<td>${esc(pname(x.projectId))}</td>`:''}<td>${esc(x.desc)}<br><span class="mute">${esc(x.vendor)}</span></td><td>${esc(x.category)}</td><td class="r ${x.type==='รายรับ'?'ok':'bad'}">${x.type==='รายรับ'?'+':'-'}${fmt(x.amount)}</td><td class="r"><button class="g" onclick="openForm('Transactions','${x.id}')">แก้</button></td></tr>`).join('')||'<tr><td colspan="6" class="mute">ยังไม่มีรายการ</td></tr>'}</table></div>`;
+/* ---------- Items (รายการจัดซื้อ) ---------- */
+function itemsView(id){
+ const it=D.Items.filter(x=>x.projectId===id),bg=D.Budgets.filter(x=>x.projectId===id);
+ const mains=[...new Set([...it.map(x=>x.main||'อื่นๆ'),...bg.map(x=>x.main)])];
+ return mains.map(m=>{
+  const a=it.filter(x=>(x.main||'อื่นๆ')===m),b=bg.find(x=>x.main===m),t=sk(a,'total'),pa=sk(a,'paid');
+  return `<div class="card" style="margin-bottom:10px"><div class="bar2" style="margin:0 0 6px"><b>${esc(m)}</b><span class="mute">รวม ฿${fmt(t)} · จ่ายแล้ว ฿${fmt(pa)}${b?` · งบ ฿${fmt(b.amount)} <span class="${t>N(b.amount)?'bad':'ok'}">(เหลือ ${fmt(N(b.amount)-t)})</span> <a href="#" onclick="openForm('Budgets','${b.id}');return false">แก้งบ</a>`:''}</span></div>
+  <div class="wrap"><table><tr><th>รายการ</th><th>จำนวน</th><th class="r">ราคา/หน่วย</th><th class="r">รวม</th><th>สถานะ</th><th class="r">จ่ายแล้ว</th><th></th></tr>${a.map(x=>`<tr><td>${x.image?`<img src="${esc(x.image)}" style="width:34px;height:34px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px">`:''}${esc(x.name)}<br><span class="mute">${esc(x.detail)} ${esc(x.remark)}</span></td><td>${esc(x.qty)} ${esc(x.unit)}</td><td class="r">${fmt(x.price)}</td><td class="r">${fmt(x.total)}</td><td><select onchange="setSt('${x.id}',this.value)" style="padding:4px;width:auto">${ST.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select></td><td class="r ${N(x.total)&&N(x.paid)>=N(x.total)?'ok':''}">${fmt(x.paid)}</td><td class="r" style="white-space:nowrap"><button class="g" title="จ่ายครบ" onclick="payAll('${x.id}')">✓</button> <button class="g" onclick="openForm('Items','${x.id}')">แก้</button></td></tr>`).join('')||'<tr><td colspan="7" class="mute">ยังไม่มีรายการในหมวดนี้</td></tr>'}</table></div></div>`;
+ }).join('')||'<p class="mute">ยังไม่มีรายการ กด "+ เพิ่มรายการ"</p>';
 }
+function setSt(id,v){const o=Object.assign({},D.Items.find(x=>x.id===id));o.status=v;run('saveRow','Items',o)}
+function payAll(id){const o=Object.assign({},D.Items.find(x=>x.id===id));o.paid=N(o.total);run('saveRow','Items',o)}
 function tx(){
- const t=D.Transactions.filter(x=>!txf||x.projectId===txf);
- $('#app').innerHTML=`<div class="bar2"><select style="max-width:240px" onchange="txf=this.value;tx()"><option value="">ทุกโปรเจ็ค</option>${D.Projects.map(p=>`<option value="${p.id}" ${p.id===txf?'selected':''}>${esc(p.name)}</option>`).join('')}</select><button class="p" onclick="openForm('Transactions',null,{projectId:txf})">+ เพิ่มรายการ</button></div>
- <div class="grid"><div class="card stat"><small>รายรับ</small><b class="ok">฿${fmt(sum(t.filter(x=>x.type==='รายรับ')))}</b></div><div class="card stat"><small>รายจ่าย</small><b class="bad">฿${fmt(sum(t.filter(x=>x.type==='รายจ่าย')))}</b></div></div>`+txTable(t,true);
+ if(!D.Projects.find(p=>p.id===txf))txf=(D.Projects[0]||{}).id||'';
+ if(!txf){$('#app').innerHTML='<p class="mute">ยังไม่มีโปรเจ็ค กรุณาเพิ่มงานก่อน</p>';return}
+ const s=stats(D.Projects.find(p=>p.id===txf));
+ $('#app').innerHTML=`<div class="bar2"><select style="max-width:260px" onchange="txf=this.value;tx()">${D.Projects.map(p=>`<option value="${p.id}" ${p.id===txf?'selected':''}>${esc(p.name)}</option>`).join('')}</select><span><button class="g" onclick="openForm('Budgets',null,{projectId:'${txf}'})">+ ตั้งงบหมวด</button> <button class="p" onclick="openForm('Items',null,{projectId:'${txf}'})">+ เพิ่มรายการ</button></span></div>
+ <div class="grid">${[['รวมทั้งหมด',s.total],['จ่ายแล้ว',s.paid],['ค้างจ่าย',s.total-s.paid]].map(([a,b])=>`<div class="card stat"><small>${a}</small><b>฿${fmt(b)}</b></div>`).join('')}</div>${itemsView(txf)}`;
 }
 /* ---------- Prices ---------- */
 function price(){
@@ -119,6 +135,7 @@ function openForm(kind,id,pre){
  const fld=([k,l,t,o])=>{const v=r[k]==null?'':r[k];let i;
   if(t==='select')i=`<select id="f_${k}">${o.map(x=>`<option ${x===v?'selected':''}>${x}</option>`).join('')}</select>`;
   else if(t==='project')i=`<select id="f_${k}"><option value="">- เลือกงาน -</option>${D.Projects.map(p=>`<option value="${p.id}" ${p.id===v?'selected':''}>${esc(p.name)}</option>`).join('')}</select>`;
+  else if(t==='main')i=`<input id="f_${k}" list="mains" value="${esc(v)}"><datalist id="mains">${[...new Set([...MAINS,...D.Items.map(x=>x.main),...D.Budgets.map(x=>x.main)])].filter(Boolean).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`;
   else if(t==='textarea')i=`<textarea id="f_${k}" rows="3">${esc(v)}</textarea>`;
   else i=`<input id="f_${k}" type="${t||'text'}" ${t==='number'?'inputmode="decimal" step="any"':''} value="${esc(v)}">`;
   return`<label>${l}</label>${i}`};
@@ -129,7 +146,9 @@ function save(kind,id){
  const o=id?Object.assign({},D[kind].find(x=>x.id===id)):{};
  F[kind].forEach(([k,,t])=>{const v=$('#f_'+k).value;o[k]=t==='number'?N(v):v});
  if(kind==='Projects'&&!o.name)return alert('กรุณาใส่ชื่องาน');
- if(kind==='Transactions'&&(!o.projectId||!o.amount))return alert('กรุณาเลือกงานและใส่จำนวนเงิน');
+ if(kind==='Items'){if(!o.projectId||!o.name)return alert('กรุณาเลือกงานและใส่ชื่อรายการ');o.main=o.main||'อื่นๆ';o.qty=o.qty||'';if(!o.total)o.total=(o.qty||1)*N(o.price)}
+ if(kind==='Budgets'&&(!o.projectId||!o.main||!o.amount))return alert('กรุณาเลือกงาน หมวด และใส่งบ');
+ if(kind==='Transactions'){if(!o.projectId||!o.amount)return alert('กรุณาเลือกงานและใส่จำนวนเงิน');o.type='รายรับ'}
  if(kind==='Prices'&&(!o.item||!o.shop||!o.price))return alert('กรุณาใส่สินค้า ร้าน และราคา');
  closeM();run('saveRow',kind,o);
 }
