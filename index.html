@@ -1,36 +1,24 @@
 <!DOCTYPE html>
-<html lang="th"><head><meta charset="utf-8">
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>บัญชีงานแต่ง | Wedding Planner</title>
 <style>
-:root{--bg:#faf6f3;--card:#fff;--ink:#2b2326;--mute:#8a7d80;--line:#eadfdc;--pri:#b4536b;--pri2:#f6e3e8;--ok:#2f8f5b;--bad:#c0392b}
-*{box-sizing:border-box}body{margin:0;font-family:'Sarabun','Noto Sans Thai',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
-header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-.top{display:flex;align-items:center;justify-content:space-between;padding:10px 16px}.top b{color:var(--pri);font-size:18px}
-nav{display:flex;gap:4px;padding:0 12px 8px;overflow-x:auto}
-nav button{border:0;background:none;padding:8px 14px;border-radius:20px;font:inherit;color:var(--mute);cursor:pointer;white-space:nowrap}
-nav button.on{background:var(--pri2);color:var(--pri);font-weight:600}
-main{max-width:1000px;margin:0 auto;padding:16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
-.stat small{color:var(--mute);display:block}.stat b{font-size:22px}
-h3{margin:18px 0 8px;font-size:16px}
-.row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}
-.mute{color:var(--mute);font-size:13px}.ok{color:var(--ok)}.bad{color:var(--bad)}
-.bar{height:8px;background:var(--pri2);border-radius:5px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--pri)}
-.bar.over i{background:var(--bad)}
-button.p{background:var(--pri);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
-button.g{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer}
-.tag{font-size:12px;background:var(--pri2);color:var(--pri);padding:2px 8px;border-radius:10px}
-.tag.best{background:#dff3e7;color:var(--ok)}
-input,select,textarea{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
-label{display:block;font-size:13px;color:var(--mute);margin:10px 0 3px}
-.bd{position:fixed;inset:0;background:#0006;display:flex;align-items:center;justify-content:center;padding:12px;z-index:9}
-.md{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:440px;max-height:90vh;overflow:auto}
-.bar2{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap}
-.clk{cursor:pointer}.clk:hover{border-color:var(--pri)}
-table{width:100%;border-collapse:collapse}td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}th{color:var(--mute);font-weight:500}.r{text-align:right}
-.wrap{overflow-x:auto}
-.pt th{white-space:nowrap;background:#fbf5f4;padding:10px 8px}.pt td{padding:11px 8px;vertical-align:middle}
-.pc{cursor:pointer}.pc:hover{background:var(--pri2)}.pc.e{color:#c9bfc1}.rg{color:var(--mute)}.low{color:#e05a5a;font-weight:700}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');
+:root{--bg:#f7f7fb;--card:#fff;--ink:#28283a;--mute:#77788e;--line:#e8e8f1;--pri:#a64d75;--pri-dark:#84375b;--pri2:#f8eaf1;--ok:#21845b;--ok-bg:#e7f7ef;--bad:#c2414b;--bad-bg:#fff0f0;--shadow:0 8px 24px rgba(43,34,64,.055);--shadow-hover:0 12px 28px rgba(43,34,64,.10)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:'Noto Sans Thai','Sarabun',system-ui,sans-serif;background:radial-gradient(ellipse at top left,#fbf0f6 0,transparent 34%),var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+header{background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;box-shadow:0 3px 18px rgba(43,34,64,.035)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px max(18px,calc((100vw - 1280px)/2));}.top b{color:var(--pri-dark);font-size:20px;font-weight:800;letter-spacing:-.3px}.top b:before{content:'WEDDING PLANNER';display:block;color:var(--mute);font-size:9px;letter-spacing:2px;font-weight:700;line-height:1.4;margin-bottom:2px}.top #st{padding:4px 10px;border-radius:20px;background:#f4f4f8}
+nav{display:flex;gap:6px;padding:0 max(12px,calc((100vw - 1280px)/2)) 12px;overflow-x:auto;scrollbar-width:thin}nav button{border:1px solid transparent;background:transparent;padding:9px 16px;border-radius:12px;font:inherit;font-weight:600;color:var(--mute);cursor:pointer;white-space:nowrap;transition:all .18s ease}nav button:hover{background:#f7f2f6;color:var(--pri)}nav button.on{background:linear-gradient(135deg,var(--pri),#c36a91);color:#fff;box-shadow:0 5px 14px #a64d752c}
+main{max-width:1320px;margin:0 auto;padding:26px 22px 40px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);transition:box-shadow .2s,border-color .2s,transform .2s}.card.clk:hover{box-shadow:var(--shadow-hover);border-color:#dfb5ca;transform:translateY(-2px)}.stat{position:relative;overflow:hidden;min-height:106px}.stat:after{content:'';position:absolute;width:72px;height:72px;right:-25px;top:-25px;border-radius:50%;background:var(--pri2);opacity:.8}.stat small{color:var(--mute);display:block;font-size:12px;font-weight:600;position:relative;z-index:1}.stat b{display:block;font-size:clamp(20px,2vw,25px);font-weight:800;letter-spacing:-.6px;margin-top:5px;overflow-wrap:anywhere;position:relative;z-index:1}
+h3{margin:18px 0 10px;font-size:16px;font-weight:800;letter-spacing:-.2px}.row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #f0eff5}.row:last-child{border:0}.row>span:first-child{min-width:0;overflow-wrap:anywhere}.mute{color:var(--mute);font-size:12px}.ok{color:var(--ok)}.bad{color:var(--bad)}
+.bar{height:8px;background:#f3e9ef;border-radius:20px;overflow:hidden;margin:8px 0 10px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#a64d75,#d58bac);border-radius:20px;transition:width .3s}.bar.over i{background:linear-gradient(90deg,#c2414b,#f07d83)}
+button{transition:all .16s ease}button.p{background:linear-gradient(135deg,var(--pri),#c36a91);color:#fff;border:0;border-radius:10px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;box-shadow:0 4px 10px #a64d751f}button.p:hover{filter:brightness(.96);transform:translateY(-1px);box-shadow:0 7px 16px #a64d7530}button.g{background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 12px;font:inherit;font-weight:600;cursor:pointer;color:#5f6075}button.g:hover{border-color:#d9a8bf;background:#fff8fb;color:var(--pri-dark)}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #d9a8bf80;outline-offset:1px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;background:var(--pri2);color:var(--pri-dark);padding:4px 10px;border-radius:20px;white-space:nowrap}.tag.best{background:var(--ok-bg);color:var(--ok)}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #dedee9;border-radius:10px;font:inherit;background:#fff;color:var(--ink);transition:border-color .16s,box-shadow .16s}input:hover,select:hover,textarea:hover{border-color:#c9c6d8}input:focus,select:focus,textarea:focus{border-color:#c17a9c;box-shadow:0 0 0 3px #a64d7512;outline:0}label{display:block;font-size:12px;color:#696a80;font-weight:700;margin:12px 0 5px}
+.bd{position:fixed;inset:0;background:rgba(28,24,40,.48);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9;animation:fadeIn .15s ease}.md{background:#fff;border:1px solid #ffffff80;border-radius:20px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow:auto;box-shadow:0 24px 80px #17132330;animation:riseIn .2s ease}.md>b{font-size:20px;font-weight:800;color:var(--pri-dark);display:block;margin-bottom:12px}
+.bar2{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap}.bar2 h3{margin:0}.clk{cursor:pointer}.clk:hover{border-color:var(--pri)}table{width:100%;border-collapse:separate;border-spacing:0}td,th{padding:10px 9px;border-bottom:1px solid #eeedf4;text-align:left;font-size:13px}th{color:var(--mute);font-weight:700;font-size:11px;letter-spacing:.2px;background:#faf9fc}.r{text-align:right}.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}.pt th{white-space:nowrap;background:#f8f5fa;padding:12px 10px;position:sticky;top:0}.pt td{padding:12px 10px;vertical-align:middle}.pt tr:last-child td{border-bottom:0}.pt tbody tr:hover,.pt tr:hover td{background:#fcf7fa}.pc{cursor:pointer;transition:background .15s}.pc:hover{background:var(--pri2)!important}.pc.e{color:#b7b5c4}.rg{color:var(--mute)}.low{color:#c23d61;font-weight:800}.wrap table select{min-width:112px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes riseIn{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:700px){.top{padding:12px 14px}.top b{font-size:18px}nav{padding:0 10px 10px}nav button{padding:8px 12px;font-size:13px}main{padding:18px 12px 28px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{padding:14px;border-radius:14px}.stat{min-height:94px}.stat b{font-size:19px}.bar2{align-items:stretch}.bar2>span{display:flex;gap:6px;flex-wrap:wrap}.bar2>button,.bar2>span button{font-size:12px}.md{padding:18px;border-radius:16px}td,th{padding:9px 7px}.top #st{font-size:11px}}
+@media(max-width:380px){.grid{grid-template-columns:1fr 1fr}.stat b{font-size:17px}.top b:before{letter-spacing:1.3px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style></head><body>
 <header><div class="top"><b>💐 บัญชีงานแต่ง</b><span class="mute" id="st"></span></div>
 <nav id="nav"></nav></header>
