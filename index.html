@@ -84,37 +84,37 @@ function dash(){
 /* ---------- Projects ---------- */
 function proj(){
  const ps=[...D.Projects].sort((a,b)=>a.date<b.date?1:-1);
- $('#app').innerHTML=`<div class="bar2"><h3 style="margin:0">โปรเจ็คทั้งหมด (${ps.length})</h3><button class="p" onclick="form('Projects')">+ เพิ่มงาน</button></div>`+
+ $('#app').innerHTML=`<div class="bar2"><h3 style="margin:0">โปรเจ็คทั้งหมด (${ps.length})</h3><button class="p" onclick="openForm('Projects')">+ เพิ่มงาน</button></div>`+
  (ps.map(p=>{const s=stats(p),pc=N(p.budget)?s.spent/N(p.budget)*100:0;return`<div class="card clk" style="margin-bottom:10px" onclick="go('pd','${p.id}')"><div class="row" style="border:0;padding:0"><b>${esc(p.name)}</b><span class="tag">${esc(p.status)}</span></div><div class="mute">${esc(p.client)} · ${esc(p.date)} · ${esc(p.venue)}</div><div class="bar ${pc>100?'over':''}"><i style="width:${Math.min(pc,100)}%"></i></div><div class="mute">งบ ฿${fmt(p.budget)} · ใช้ ฿${fmt(s.spent)} · <span class="${s.left<0?'bad':'ok'}">เหลือ ฿${fmt(s.left)}</span></div></div>`}).join('')||'<p class="mute">ยังไม่มีงาน กด "+ เพิ่มงาน"</p>');
 }
 function pd(){
  const p=D.Projects.find(x=>x.id===pid);if(!p)return go('proj');const s=stats(p);
- $('#app').innerHTML=`<div class="bar2"><button class="g" onclick="go('proj')">← กลับ</button><span><button class="g" onclick="form('Projects','${p.id}')">แก้ไข</button> <button class="g" onclick="del('Projects','${p.id}')">ลบ</button></span></div>
+ $('#app').innerHTML=`<div class="bar2"><button class="g" onclick="go('proj')">← กลับ</button><span><button class="g" onclick="openForm('Projects','${p.id}')">แก้ไข</button> <button class="g" onclick="del('Projects','${p.id}')">ลบ</button></span></div>
  <div class="card"><h3 style="margin:0">${esc(p.name)} <span class="tag">${esc(p.status)}</span></h3><div class="mute">ลูกค้า: ${esc(p.client)} · วันงาน: ${esc(p.date)} · สถานที่: ${esc(p.venue)}</div><p>${esc(p.note).replace(/\n/g,'<br>')}</p></div>
  <div class="grid" style="margin-top:10px">${[['งบที่ได้รับ',p.budget],['ใช้ไป',s.spent],['เหลือ',s.left],['รับเงินแล้ว',s.rec],['ค้างรับ',N(p.budget)-s.rec]].map(([a,b])=>`<div class="card stat"><small>${a}</small><b>฿${fmt(b)}</b></div>`).join('')}</div>
- <div class="bar2"><h3 style="margin:0">รายการของงานนี้</h3><button class="p" onclick="form('Transactions',null,{projectId:'${p.id}'})">+ เพิ่มรายการ</button></div>${txTable(s.t,false)}`;
+ <div class="bar2"><h3 style="margin:0">รายการของงานนี้</h3><button class="p" onclick="openForm('Transactions',null,{projectId:'${p.id}'})">+ เพิ่มรายการ</button></div>${txTable(s.t,false)}`;
 }
 /* ---------- Transactions ---------- */
 function txTable(t,showP){
  t=[...t].sort((a,b)=>a.date<b.date?1:-1);
- return `<div class="card wrap"><table><tr><th>วันที่</th>${showP?'<th>งาน</th>':''}<th>รายการ</th><th>หมวด</th><th class="r">จำนวน</th><th></th></tr>${t.map(x=>`<tr><td>${esc(x.date)}</td>${showP?`<td>${esc(pname(x.projectId))}</td>`:''}<td>${esc(x.desc)}<br><span class="mute">${esc(x.vendor)}</span></td><td>${esc(x.category)}</td><td class="r ${x.type==='รายรับ'?'ok':'bad'}">${x.type==='รายรับ'?'+':'-'}${fmt(x.amount)}</td><td class="r"><button class="g" onclick="form('Transactions','${x.id}')">แก้</button></td></tr>`).join('')||'<tr><td colspan="6" class="mute">ยังไม่มีรายการ</td></tr>'}</table></div>`;
+ return `<div class="card wrap"><table><tr><th>วันที่</th>${showP?'<th>งาน</th>':''}<th>รายการ</th><th>หมวด</th><th class="r">จำนวน</th><th></th></tr>${t.map(x=>`<tr><td>${esc(x.date)}</td>${showP?`<td>${esc(pname(x.projectId))}</td>`:''}<td>${esc(x.desc)}<br><span class="mute">${esc(x.vendor)}</span></td><td>${esc(x.category)}</td><td class="r ${x.type==='รายรับ'?'ok':'bad'}">${x.type==='รายรับ'?'+':'-'}${fmt(x.amount)}</td><td class="r"><button class="g" onclick="openForm('Transactions','${x.id}')">แก้</button></td></tr>`).join('')||'<tr><td colspan="6" class="mute">ยังไม่มีรายการ</td></tr>'}</table></div>`;
 }
 function tx(){
  const t=D.Transactions.filter(x=>!txf||x.projectId===txf);
- $('#app').innerHTML=`<div class="bar2"><select style="max-width:240px" onchange="txf=this.value;tx()"><option value="">ทุกโปรเจ็ค</option>${D.Projects.map(p=>`<option value="${p.id}" ${p.id===txf?'selected':''}>${esc(p.name)}</option>`).join('')}</select><button class="p" onclick="form('Transactions',null,{projectId:txf})">+ เพิ่มรายการ</button></div>
+ $('#app').innerHTML=`<div class="bar2"><select style="max-width:240px" onchange="txf=this.value;tx()"><option value="">ทุกโปรเจ็ค</option>${D.Projects.map(p=>`<option value="${p.id}" ${p.id===txf?'selected':''}>${esc(p.name)}</option>`).join('')}</select><button class="p" onclick="openForm('Transactions',null,{projectId:txf})">+ เพิ่มรายการ</button></div>
  <div class="grid"><div class="card stat"><small>รายรับ</small><b class="ok">฿${fmt(sum(t.filter(x=>x.type==='รายรับ')))}</b></div><div class="card stat"><small>รายจ่าย</small><b class="bad">฿${fmt(sum(t.filter(x=>x.type==='รายจ่าย')))}</b></div></div>`+txTable(t,true);
 }
 /* ---------- Prices ---------- */
 function price(){
- $('#app').innerHTML=`<div class="bar2"><input id="q" style="flex:1;min-width:180px" placeholder="🔍 ค้นหาดอกไม้ / สินค้า เช่น กุหลาบ" value="${esc(q)}" oninput="q=this.value;plist()"><button class="p" onclick="form('Prices')">+ เพิ่มราคา</button></div><div id="pl"></div>`;plist();
+ $('#app').innerHTML=`<div class="bar2"><input id="q" style="flex:1;min-width:180px" placeholder="🔍 ค้นหาดอกไม้ / สินค้า เช่น กุหลาบ" value="${esc(q)}" oninput="q=this.value;plist()"><button class="p" onclick="openForm('Prices')">+ เพิ่มราคา</button></div><div id="pl"></div>`;plist();
 }
 function plist(){
  const k=q.trim().toLowerCase(),g={};
  D.Prices.filter(x=>!k||(x.item+x.shop+x.note).toLowerCase().includes(k)).forEach(x=>{const key=String(x.item).trim().toLowerCase()+'|'+String(x.unit).trim();(g[key]=g[key]||[]).push(x)});
- $('#pl').innerHTML=Object.values(g).map(a=>{a.sort((x,y)=>N(x.price)-N(y.price));const b=a[0];return`<div class="card" style="margin-bottom:10px"><div class="row" style="border:0;padding:0"><b>${esc(b.item)} <span class="mute">/ ${esc(b.unit)}</span></b><span class="tag best">ถูกสุด: ${esc(b.shop)} ฿${fmt(b.price)}</span></div>${a.map((x,i)=>`<div class="row"><span>${esc(x.shop)} <span class="mute">${esc(x.date)} ${esc(x.note)}</span></span><span><b class="${i?'':'ok'}">฿${fmt(x.price)}</b> <button class="g" onclick="form('Prices','${x.id}')">แก้</button></span></div>`).join('')}</div>`}).join('')||'<p class="mute">ไม่พบข้อมูล — กด "+ เพิ่มราคา" เพื่อบันทึกราคาจากแต่ละร้าน</p>';
+ $('#pl').innerHTML=Object.values(g).map(a=>{a.sort((x,y)=>N(x.price)-N(y.price));const b=a[0];return`<div class="card" style="margin-bottom:10px"><div class="row" style="border:0;padding:0"><b>${esc(b.item)} <span class="mute">/ ${esc(b.unit)}</span></b><span class="tag best">ถูกสุด: ${esc(b.shop)} ฿${fmt(b.price)}</span></div>${a.map((x,i)=>`<div class="row"><span>${esc(x.shop)} <span class="mute">${esc(x.date)} ${esc(x.note)}</span></span><span><b class="${i?'':'ok'}">฿${fmt(x.price)}</b> <button class="g" onclick="openForm('Prices','${x.id}')">แก้</button></span></div>`).join('')}</div>`}).join('')||'<p class="mute">ไม่พบข้อมูล — กด "+ เพิ่มราคา" เพื่อบันทึกราคาจากแต่ละร้าน</p>';
 }
 /* ---------- Form ---------- */
-function form(kind,id,pre){
+function openForm(kind,id,pre){
  const r=id?D[kind].find(x=>x.id===id):Object.assign({date:today(),type:'รายจ่าย'},pre||{});
  const fld=([k,l,t,o])=>{const v=r[k]==null?'':r[k];let i;
   if(t==='select')i=`<select id="f_${k}">${o.map(x=>`<option ${x===v?'selected':''}>${x}</option>`).join('')}</select>`;
