@@ -29,6 +29,8 @@ label{display:block;font-size:13px;color:var(--mute);margin:10px 0 3px}
 .clk{cursor:pointer}.clk:hover{border-color:var(--pri)}
 table{width:100%;border-collapse:collapse}td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}th{color:var(--mute);font-weight:500}.r{text-align:right}
 .wrap{overflow-x:auto}
+.pt th{white-space:nowrap;background:#fbf5f4;padding:10px 8px}.pt td{padding:11px 8px;vertical-align:middle}
+.pc{cursor:pointer}.pc:hover{background:var(--pri2)}.pc.e{color:#c9bfc1}.rg{color:var(--mute)}.low{color:#e05a5a;font-weight:700}
 </style></head><body>
 <header><div class="top"><b>💐 บัญชีงานแต่ง</b><span class="mute" id="st"></span></div>
 <nav id="nav"></nav></header>
@@ -44,7 +46,7 @@ const F={
  Items:[['projectId','โปรเจ็ค','project'],['main','หมวดหลัก (เช่น Dinner Table, ดอกไม้)','main'],['name','รายการ'],['detail','รายละเอียด'],['qty','จำนวน','number'],['unit','หน่วย (เช่น เมตร, แพ็ค, ชิ้น)'],['price','ราคาต่อหน่วย','number'],['total','ราคารวม (ปล่อยว่าง = จำนวน × ราคา)','number'],['remark','หมายเหตุ'],['status','สถานะ','select',ST],['paid','จ่ายแล้ว (บาท)','number'],['image','ลิงก์รูป (ถ้ามี)']],
  Budgets:[['projectId','โปรเจ็ค','project'],['main','หมวด','main'],['amount','งบของหมวด (บาท)','number']],
  Transactions:[['date','วันที่รับเงิน','date'],['projectId','โปรเจ็ค','project'],['desc','รายการ (เช่น มัดจำงวด 1)'],['amount','จำนวนเงิน (บาท)','number']],
- Prices:[['item','สินค้า/ดอกไม้'],['unit','หน่วย (เช่น มัด, ก้าน, ชิ้น)'],['shop','ร้าน'],['price','ราคา (บาท)','number'],['date','วันที่เช็คราคา','date'],['note','หมายเหตุ']]
+ Prices:[['item','ดอกไม้/สินค้า'],['color','สี/ประเภท'],['unit','หน่วย (เช่น มัด, ก้าน, ชิ้น)'],['shop','ร้าน'],['price','ราคา (บาท)','number'],['date','วันที่เช็คราคา','date'],['note','หมายเหตุ']]
 };
 let D={Projects:[],Transactions:[],Prices:[],Items:[],Budgets:[]},page='dash',pid=null,txf='',q='';
 const N=x=>Number(x)||0,fmt=n=>N(n).toLocaleString('th-TH'),today=()=>new Date().toISOString().slice(0,10);
@@ -121,13 +123,36 @@ function tx(){
  <div class="grid">${[['รวมทั้งหมด',s.total],['จ่ายแล้ว',s.paid],['ค้างจ่าย',s.total-s.paid]].map(([a,b])=>`<div class="card stat"><small>${a}</small><b>฿${fmt(b)}</b></div>`).join('')}</div>${itemsView(txf)}`;
 }
 /* ---------- Prices ---------- */
+let PM={shops:[],rows:[]};
+const rng=x=>{const m=String(x.note||'').match(/ช่วงราคา\s*([\d.,]+\s*-\s*[\d.,]+)/);return m?m[1].replace(/\s/g,''):''};
+const low=(r,shops)=>{const v=shops.map(s=>r.c[s]).filter(Boolean);return v.length?v.reduce((a,b)=>N(b.price)<N(a.price)?b:a):null};
+function pmatrix(){
+ const k=q.trim().toLowerCase(),PREF=['Dee dee','Flowerland','Worldflower','555','NNP'];
+ const all=[...new Set(D.Prices.map(x=>x.shop))];
+ const shops=[...PREF.filter(s=>all.includes(s)),...all.filter(s=>!PREF.includes(s)&&s!=='ไม่ระบุร้าน'),...all.filter(s=>s==='ไม่ระบุร้าน')];
+ const map=new Map();
+ D.Prices.filter(x=>!k||[x.item,x.color,x.shop,x.note].join(' ').toLowerCase().includes(k)).forEach(x=>{
+  const key=[x.item,x.color,x.unit].map(v=>String(v==null?'':v).trim()).join('|');
+  if(!map.has(key))map.set(key,{item:x.item,color:x.color||'',unit:x.unit||'',c:{}});
+  const r=map.get(key),cur=r.c[x.shop];if(!cur||N(x.price)<N(cur.price))r.c[x.shop]=x;
+ });
+ return{shops,rows:[...map.values()]};
+}
 function price(){
- $('#app').innerHTML=`<div class="bar2"><input id="q" style="flex:1;min-width:180px" placeholder="🔍 ค้นหาดอกไม้ / สินค้า เช่น กุหลาบ" value="${esc(q)}" oninput="q=this.value;plist()"><button class="p" onclick="openForm('Prices')">+ เพิ่มราคา</button></div><div id="pl"></div>`;plist();
+ $('#app').innerHTML=`<div class="bar2"><input id="q" style="flex:1;min-width:180px" placeholder="🔍 ค้นหาดอกไม้ / สินค้า เช่น กุหลาบ" value="${esc(q)}" oninput="q=this.value;plist()"><button class="p" onclick="openForm('Prices')">+ เพิ่มราคา</button></div>
+ <div class="card"><div class="bar2" style="align-items:flex-start"><div><h3 style="margin:0">Supplier Price List</h3><div class="mute">เทียบราคาแต่ละร้าน — ตรวจสอบหน่วยและราคาก่อนสั่งซื้อ · กดที่ราคาเพื่อแก้ไข กด — เพื่อเพิ่มราคา</div></div><button class="g" onclick="exportCsv()">⇩ Export CSV</button></div><div id="pl"></div></div>`;
+ plist();
 }
 function plist(){
- const k=q.trim().toLowerCase(),g={};
- D.Prices.filter(x=>!k||(x.item+x.shop+x.note).toLowerCase().includes(k)).forEach(x=>{const key=String(x.item).trim().toLowerCase()+'|'+String(x.unit).trim();(g[key]=g[key]||[]).push(x)});
- $('#pl').innerHTML=Object.values(g).map(a=>{a.sort((x,y)=>N(x.price)-N(y.price));const b=a[0];return`<div class="card" style="margin-bottom:10px"><div class="row" style="border:0;padding:0"><b>${esc(b.item)} <span class="mute">/ ${esc(b.unit)}</span></b><span class="tag best">ถูกสุด: ${esc(b.shop)} ฿${fmt(b.price)}</span></div>${a.map((x,i)=>`<div class="row"><span>${esc(x.shop)} <span class="mute">${esc(x.date)} ${esc(x.note)}</span></span><span><b class="${i?'':'ok'}">฿${fmt(x.price)}</b> <button class="g" onclick="openForm('Prices','${x.id}')">แก้</button></span></div>`).join('')}</div>`}).join('')||'<p class="mute">ไม่พบข้อมูล — กด "+ เพิ่มราคา" เพื่อบันทึกราคาจากแต่ละร้าน</p>';
+ PM=pmatrix();const{shops,rows}=PM;
+ $('#pl').innerHTML=rows.length?`<div class="wrap"><table class="pt"><tr><th>Flower</th><th>Color / Type</th>${shops.map(s=>`<th>${esc(s)}</th>`).join('')}<th>ราคาต่ำสุด</th></tr>${rows.map((r,ri)=>{const m=low(r,shops);return`<tr><td><b>${esc(r.item)}</b></td><td>${esc(r.color)}${r.unit?` <span class="mute">(${esc(r.unit)})</span>`:''}</td>${shops.map((s,si)=>{const x=r.c[s];return x?`<td class="pc" onclick="openForm('Prices','${x.id}')">${rng(x)?`<span class="rg">${rng(x)}</span>`:fmt(x.price)}</td>`:`<td class="pc e" onclick="addPrice(${ri},${si})">—</td>`}).join('')}<td>${m?`<span class="low">฿${fmt(m.price)}</span><br><span class="mute" style="font-size:11px">${esc(m.shop)}</span>`:'—'}</td></tr>`}).join('')}</table></div>`:'<p class="mute">ไม่พบข้อมูล — กด "+ เพิ่มราคา" เพื่อบันทึกราคาจากแต่ละร้าน</p>';
+}
+function addPrice(ri,si){const r=PM.rows[ri];openForm('Prices',null,{item:r.item,color:r.color,unit:r.unit,shop:PM.shops[si]})}
+function exportCsv(){
+ const{shops,rows}=PM,q2=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ const L=[['Flower','Color / Type',...shops,'ราคาต่ำสุด','ร้านที่ถูกสุด'].map(q2).join(',')];
+ rows.forEach(r=>{const m=low(r,shops);L.push([r.item,r.color+(r.unit?' ('+r.unit+')':''),...shops.map(s=>r.c[s]?(rng(r.c[s])||r.c[s].price):''),m?m.price:'',m?m.shop:''].map(q2).join(','))});
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+L.join('\n')],{type:'text/csv;charset=utf-8'}));a.download='supplier-price-list.csv';a.click();
 }
 /* ---------- Form ---------- */
 function openForm(kind,id,pre){
